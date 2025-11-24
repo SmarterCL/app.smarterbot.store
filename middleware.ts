@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/mcp/ping",
   "/api/health",
   "/api/contacts/test",
+  "/demo-dashboard(.*)",
 ])
 
 export default clerkMiddleware(async (auth, request) => {
