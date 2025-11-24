@@ -1,0 +1,71 @@
+name: smarteros-retail-node
+description: >
+  Nodo para operar una tienda pequeña en Chile con ventas, inventario,
+  boletas y atención por WhatsApp. One-click deploy.
+
+context:
+  market: comercio_local_chile
+  identity: rut_como_llave
+  payment_flow: sumup_o_pos_equivalente
+
+services:
+  postgres:
+    role: base_de_datos
+    image: ankane/pgvector:latest
+    persistence: true
+
+  n8n:
+    role: motor_automatizacion
+    triggers:
+      - pago_confirmado_sumup
+      - solicitud_ticket_whatsapp
+
+  botpress:
+    role: atencion_cliente_conversacional
+    channel: whatsapp
+
+  odoo:
+    role: ventas_inventario_boleta
+    modules:
+      - sale
+      - point_of_sale
+      - stock
+      - l10n_cl
+      - contacts
+
+  supabase:
+    role: identidad_y_historial
+    tables:
+      - customers
+      - sales_history
+
+  metabase:
+    role: panel_de_control
+    dashboards:
+      - ventas_del_dia
+      - productos_top
+      - ticket_promedio
+
+  caddy:
+    role: https_reverse_proxy
+    subdomains:
+      n8n: n8n.smarterbot.cl
+      botpress: chat.smarterbot.cl
+      odoo: erp.smarterbot.cl
+      metabase: kpi.smarterbot.cl
+
+business_rules:
+  venta:
+    trigger: pago_sumup_confirmado
+    steps:
+      - registrar_venta_en_odoo(cliente, productos, monto)
+      - actualizar_inventario(productos)
+      - guardar_evento_en_supabase(cliente, monto, timestamp)
+      - enviar_confirmacion_whatsapp(cliente, "Gracias por tu compra")
+      - actualizar_kpis_en_metabase()
+
+deployment:
+  method: one_click
+  orchestrator: dokploy
+  env_template: .env.example
+  replication: copiar_spec_y_configurar_dominio

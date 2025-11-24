@@ -1,0 +1,70 @@
+name: smarteros-ai
+repository: https://github.com/SmarterCL/ia.smarterbot.cl
+role: ai_orchestration
+description: >
+  Servicios de modelos, embeddings y webhooks que alimentan asistentes
+  (Botpress, WhatsApp, dashboard). Coordina pipelines de datos con
+  Supabase y n8n para entrenamiento ligero y respuestas contextualizadas.
+
+depends_on:
+  - service: supabase
+    reason: almacén de embeddings y conversation history
+  - service: postgres
+    reason: features estructuradas (ventas, inventario)
+  - service: n8n
+    reason: orquestación de jobs (ingestión y retraining)
+  - service: botpress
+    reason: canal conversacional que consume las APIs
+
+public_endpoints:
+  - url: https://ia.smarterbot.cl/api/query
+    purpose: endpoint de inferencia (RAG)
+
+private_services:
+  - name: embeddings_pipeline
+    type: worker
+    flow: supabase -> pgvector
+    schedule: hourly
+  - name: webhook_ingest
+    path: /api/webhooks/events
+    sources: botpress, n8n, odoo
+  - name: model_registry
+    storage: s3-compatible bucket
+    notes: versiona prompts y checkpoints
+
+auth:
+  api_key_header: X-SmarterOS-AI-Key
+  service_to_service: jwt firmado por pay + app
+  data_access: row-level security vía Supabase policies (rut)
+  sso:
+    provider: clerk
+    tenant: internal
+    audience: equipos de datos / soporte nivel 2
+
+policies:
+  - Solo usuarios autenticados vía Clerk tenant interno pueden acceder a UI/diagnósticos.
+  - No exponer endpoints públicos adicionales sin pasar por Botpress o pay.
+  - Todos los datasets deben anonimizar RUT cuando salgan de IA hacia terceros.
+
+agent_permissions:
+  can_edit:
+    - prompts y plantillas
+    - configuración de pipelines n8n asociados
+    - parametros de embeddings (dimensión, modelo)
+  cannot_edit:
+    - llaves maestras (OpenAI, Anthropic, etc.)
+    - buckets con datos sensibles sin aprobación
+    - politicas RLS en Supabase
+
+observability:
+  metrics: latency_p95, token_usage, error_rate
+  alerts:
+    - latency_p95 > 5s
+    - embedding_job_failed consecutivas 3 veces
+
+release:
+  method: dokploy_one_click
+  checklist:
+    - correr tests de regresión RAG
+    - recalcular embeddings críticos
+    - anunciar cambio a Botpress para sync

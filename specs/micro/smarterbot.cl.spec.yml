@@ -1,0 +1,60 @@
+name: smarteros-brand
+repository: https://github.com/SmarterCL/smarterbot.cl
+role: identity_marketing
+description: >
+  Sitio madre y sistema de identidad de la marca SmarterBot. Controla
+  narrativa comercial, activos visuales y enlaces hacia cada nodo
+  operativo (app, tienda, pay, ia).
+
+depends_on:
+  - service: vercel
+    reason: hosting estático + edge
+  - service: clerk
+    reason: deep-links a sesiones existentes
+  - service: analytics (plausible/ga4)
+    reason: medición de campañas
+
+public_endpoints:
+  - url: https://smarterbot.cl
+    purpose: landing principal + captación
+  - url: https://www.smarterbot.cl
+    purpose: alias canónico
+
+security:
+  sessions: none (contenido leído sin login)
+  forms:
+    captcha: recaptcha-v3
+    processing: gtm server-side + n8n
+  headers:
+    - strict-transport-security: "max-age=63072000; includeSubDomains; preload"
+
+brand_assets:
+  tokens: colores, tipografías, spacing usados por app/tienda
+  components: hero, pricing-table, faq
+  media: logos SVG, mockups, videos
+
+messaging:
+  pillars:
+    - operaciones retail simplificadas
+    - automatización omnicanal
+    - cumplimiento tributario Chile
+  ctas:
+    - book_demo (link a app.smarterbot.cl/demo)
+    - whatsapp_sales
+
+agent_permissions:
+  can_edit:
+    - contenido, secciones, CTAs
+    - assets gráficos (si siguen guía)
+    - metadatos SEO/OpenGraph
+  cannot_edit:
+    - términos legales y política de privacidad
+    - DNS raíz o certificados
+    - enlaces oficiales de soporte
+
+release:
+  method: vercel_deploy
+  checklist:
+    - verificar links hacia app/tienda/pay/ia
+    - pasar Lighthouse >= 90
+    - anunciar cambios a equipo marketing

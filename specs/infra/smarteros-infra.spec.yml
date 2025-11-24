@@ -1,0 +1,184 @@
+name: smarteros-infra
+description: >
+  Estado declarativo de la infraestructura operada con Docker Compose +
+  Dokploy. Define los servicios core (datos, automatización, ERP, bots y
+  canales) necesarios para operar tiendas SmarterOS y cómo deben arrancar,
+  exponerse y mantenerse sanos.
+
+orchestrator:
+  type: dokploy
+  runtime: docker
+  compose_file: ../../dkcompose/docker-compose.yml
+  networks:
+    - smarter-net         # red privada para servicios internos
+    - dokploy-network     # red externa compartida con Traefik
+
+spec_catalog:
+  micro_index: ../micro/index.yml
+  schema: ../schemas/micro-spec.schema.yml
+  enforcement:
+    - validar que tienda.smarterbot.cl solo usa hosted fields/redirect de pay.smarterbot.cl
+    - asegurar que pay.smarterbot.cl no procesa ni almacena PAN/CVV (SAQ-A)
+    - ia.smarterbot.cl exige SSO interno (Clerk tenant interno)
+    - smarterbot.cl sirve contenido público sin sesiones y con reCAPTCHA v3 en formularios
+
+data_persistence:
+  - name: postgres_data
+    scope: postgres
+    contents: bases de datos `smarter` y `chatwoot`
+    backup: snapshot diario antes de despliegues
+  - name: redis_data
+    scope: redis
+    contents: colas y sesiones de Chatwoot
+    backup: no requerida (datos efímeros)
+  - name: n8n_data
+    scope: n8n
+    contents: credenciales y workflows
+    backup: semanal + antes de upgrades
+  - name: portainer_data
+    scope: portainer
+    contents: configuración de agentes/nodos
+  - name: botpress_data
+    scope: botpress
+    contents: bots, embeddings, archivos subidos
+  - name: odoo_extra_addons
+    scope: odoo
+    contents: módulos adicionales + assets
+  - name: chatwoot_data
+    scope: chatwoot
+    contents: archivos adjuntos y blobs persistentes
+
+traefik:
+  network: dokploy-network
+  entrypoint: websecure
+  certresolver: letsencrypt
+  routers:
+    - host: odoo.smarterbot.cl
+      service: odoo
+      target_port: 8069
+    - host: n8n.smarterbot.cl
+      service: n8n
+      target_port: 5678
+    - host: chat.smarterbot.cl
+      service: botpress
+      target_port: 3000
+    - host: chatwoot.smarterbot.cl
+      service: chatwoot
+      target_port: 3000
+    - host: portainer.smarterbot.cl
+      service: portainer
+      target_port: 9000
+    - host: kpi.smarterbot.cl
+      service: metabase
+      target_port: 3000
+
+services:
+  postgres:
+    role: base_de_datos_principal
+    image: ankane/pgvector:latest
+    volumes: [postgres_data]
+    healthcheck: pg_isready contra db smarter cada 5s
+    depends_on: []
+    notes: expone únicamente en smarter-net; credenciales `smarter/smarter`
+
+  db-init-chatwoot:
+    role: bootstrap_db_chatwoot
+    image: postgres:16
+    run_mode: oneshot
+    depends_on: [postgres]
+    notes: crea rol y base `chatwoot`; debe completarse antes de levantar chatwoot*
+
+  redis:
+    role: cache_colas
+    image: redis:7-alpine
+    volumes: [redis_data]
+    depends_on: []
+    notes: datos efímeros; requerido por Chatwoot worker/scheduler
+
+  odoo:
+    role: erp_pos_boletas
+    image: odoo:19
+    volumes: [odoo_extra_addons]
+    depends_on: [postgres]
+    traefik_router: odoo.smarterbot.cl
+    notes: conecta a Postgres usando usuario smarter; usar websecure TLS
+
+  n8n:
+    role: motor_automatizacion
+    image: n8nio/n8n:latest
+    volumes: [n8n_data]
+    depends_on: [postgres]
+    traefik_router: n8n.smarterbot.cl
+    env:
+      timezone: America/Santiago
+      webhook_url: https://n8n.smarterbot.cl/
+
+  botpress:
+    role: atencion_conversacional
+    image: botpress/server:latest
+    volumes: [botpress_data]
+    traefik_router: chat.smarterbot.cl
+    depends_on: []
+
+  chatwoot:
+    role: omnicanal_whatsapp
+    image: ghcr.io/chatwoot/chatwoot:v2.10.1
+    volumes: [chatwoot_data]
+    traefik_router: chatwoot.smarterbot.cl
+    depends_on:
+      - postgres
+      - redis
+      - db-init-chatwoot
+    notes: requiere SECRET_KEY_BASE y DATABASE_URL predefinidos
+
+  chatwoot-worker:
+    role: workers_async
+    depends_on: [chatwoot]
+    command: bundle exec sidekiq
+
+  chatwoot-scheduler:
+    role: scheduler
+    depends_on: [chatwoot]
+    command: bundle exec whenever --update-crontab && crond -f -l 2
+
+  portainer:
+    role: gestion_docker
+    image: portainer/portainer-ce:latest
+    volumes: [/var/run/docker.sock, portainer_data]
+    traefik_router: portainer.smarterbot.cl
+    depends_on: []
+
+  metabase:
+    role: panel_kpi
+    status: pending_deploy
+    traefik_router: kpi.smarterbot.cl
+    notes: debe apuntar a Postgres (separar schema analitico). No subir hasta definir credenciales.
+
+agent_policies:
+  remote_agent_can:
+    - reiniciar servicios vía dokploy/docker compose
+    - aplicar actualizaciones declaradas en este spec
+    - rotar contenedores manteniendo volúmenes adjuntos
+    - ejecutar healthchecks y auto-heal (restart) si fallan
+  remote_agent_cannot:
+    - borrar volúmenes declarados sin backup previo
+    - cambiar dominios o certificados Traefik sin aprobar cambios DNS
+    - modificar credenciales maestras (DB, SECRET_KEY_BASE) sin registro
+    - exponer nuevos puertos fuera de traefik sin autorización
+
+auto_heal:
+  strategy: >
+    verificar healthchecks (pg_isready, HTTP 200 en Traefik) cada 60s;
+    reiniciar contenedores fallidos hasta 3 intentos y notificar si persiste.
+  manual_actions:
+    - postgres: revisar logs antes de reiniciar para evitar corrupción
+    - chatwoot: si falla migración, correr `rails db:migrate` manualmente
+
+replication:
+  how_to_clone: >
+    exportar volúmenes persistentes, copiar este spec, crear redes
+    `dokploy-network` y `smarter-net`, luego `docker compose up -d`.
+  env_requirements:
+    - Docker Engine >= 24
+    - Traefik operando en la misma red externa
+    - DNS apuntando a la IP pública antes de solicitar certificados

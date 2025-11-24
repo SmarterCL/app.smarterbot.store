@@ -1,0 +1,67 @@
+name: smarteros-pay
+repository: https://github.com/SmarterCL/pay.smarterbot.cl
+role: psp_router
+description: >
+  Servicio que normaliza flujos de pago (SumUp, POS equivalentes,
+  transferencias) y emite callbacks a storefront, Odoo y n8n para cerrar
+  ventas, emitir boletas y actualizar KPIs.
+
+depends_on:
+  - service: sumup
+    reason: PSP principal
+  - service: supabase
+    reason: log de transacciones y reconciliación
+  - service: odoo
+    reason: emisión de factura/boleta y estado de pedido
+  - service: n8n
+    reason: automatizaciones post-pago
+
+public_endpoints:
+  - url: https://pay.smarterbot.cl/api/webhooks/sumup
+    purpose: recibir confirmaciones de pago
+  - url: https://pay.smarterbot.cl/api/status/{order_id}
+    purpose: consulta desde storefront/botpress
+
+private_services:
+  - name: settlement_job
+    schedule: "0 */6 * * *"
+    flow: supabase -> odoo -> metabase
+  - name: psp_router
+    logic: selecciona PSP activo según tienda y monto
+  - name: fraud_checks
+    inputs: supabase.customers, external watchlists
+
+auth:
+  inbound_webhooks: hmac-sha256 (header X-SumUp-Signature)
+  outbound_callbacks: mTLS hacia storefront/n8n
+  operator_access: clerk admin group
+
+compliance:
+  pci_scope: SAQ-A
+  policies:
+    - Nunca persistir ni loggear PAN/CVV ni datos sensibles de tarjeta.
+    - Usar hosted fields/redirects proporcionados por PSPs aprobados.
+    - Rotar llaves HMAC/KMS mediante Dokploy secrets; prohibido commits.
+
+agent_permissions:
+  can_edit:
+    - mapping de PSPs
+    - payload transform (JSON schema)
+    - reintentos y timeouts
+  cannot_edit:
+    - llaves HMAC sin rotación coordinada
+    - cuentas bancarias de settlement
+    - reglas antifraude certificadas
+
+failure_modes:
+  - name: webhook_missed
+    auto_heal: reintentar pull API sumup
+  - name: reconciliation_drift
+    action: comparar contra Odoo y generar alerta Slack
+
+release:
+  method: dokploy_one_click
+  checklist:
+    - probar sandbox SumUp
+    - disparar webhook de prueba a tienda y n8n
+    - verificar settlement job dry-run

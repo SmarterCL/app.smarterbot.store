@@ -1,0 +1,17 @@
+# Variables de Entorno para app.smarterbot.cl en Vercel
+# Configurar en: https://vercel.com/smartercl/app-smarterbot/settings/environment-variables
+
+# ✅ SUPABASE (LISTO)
+NEXT_PUBLIC_SUPABASE_URL=https://rjfcmmzjlguiititkmyh.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZmNtbXpqbGd1aWl0aXRrbXloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3OTk3MzUsImV4cCI6MjA3NzM3NTczNX0.IRj4EXZErrxcHetZNu5onhDTR3iEe5lMA--ireaR19A
+
+# ⚠️ CLERK (PENDIENTE - necesitas obtenerlas)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXXX
+CLERK_SECRET_KEY=sk_test_XXXXXXXXX
+
+# ✅ APP CONFIG (LISTO)
+NEXT_PUBLIC_APP_URL=https://app.smarterbot.cl
+NODE_ENV=production
+
+# ✅ DEMO MODE (OPCIONAL - para testing rápido)
+NEXT_PUBLIC_DEMO_MODE=false

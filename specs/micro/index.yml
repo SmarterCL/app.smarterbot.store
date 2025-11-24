@@ -1,0 +1,23 @@
+micro_specs:
+  - id: storefront-pos
+    domain: tienda.smarterbot.cl
+    path: tienda.smarterbot.cl.spec.yml
+    repository: https://github.com/SmarterCL/tienda.smarterbot.cl
+    sla:
+      p1: acknowledgment 15m, resolution 2h
+      p2: acknowledgment 1h, resolution 1d
+
+  - id: ai-orchestration
+    domain: ia.smarterbot.cl
+    path: ia.smarterbot.cl.spec.yml
+    repository: https://github.com/SmarterCL/ia.smarterbot.cl
+
+  - id: checkout-gateway
+    domain: pay.smarterbot.cl
+    path: pay.smarterbot.cl.spec.yml
+    repository: https://github.com/SmarterCL/pay.smarterbot.cl
+
+  - id: brand-site
+    domain: smarterbot.cl
+    path: smarterbot.cl.spec.yml
+    repository: https://github.com/SmarterCL/smarterbot.cl

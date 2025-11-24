@@ -1,0 +1,501 @@
+{
+  "name": "MCP - Sync Contact (Dashboard → Supabase → Odoo/Chatwoot/Botpress)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateVersion": "1.0.0",
+    "description": "Routes dashboard sign-ins through Supabase to MCP services"
+  },
+  "nodes": [
+    {
+      "id": "6a928f9d-3f60-4e1a-bb70-821fa9eb4bb6",
+      "name": "Webhook - Dashboard User Active",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dashboard-user-active",
+        "responseMode": "responseNode",
+        "options": {
+          "responseContentType": "application/json"
+        }
+      },
+      "webhookId": "dashboard-user-active"
+    },
+    {
+      "id": "3265b65c-767c-4a0f-8cf7-9e8d1b5e9c30",
+      "name": "Set - Normalize Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        420,
+        280
+      ],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "user_id",
+              "value": "={{$json[\"body\"][\"user_id\"]}}"
+            },
+            {
+              "name": "rut",
+              "value": "={{$json[\"body\"][\"rut\"]}}"
+            }
+          ],
+          "json": [
+            {
+              "name": "raw_payload",
+              "value": "={{$json[\"body\"]}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d7f554b7-1488-4f22-9029-6b5e6d247383",
+      "name": "HTTP - Supabase Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        640,
+        200
+      ],
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/contacts",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "contacts"
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "select",
+              "value": "id,name,email,phone,source,rut,clerk_user_id"
+            },
+            {
+              "name": "clerk_user_id",
+              "value": "eq.={{$json[\"user_id\"]}}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "de6a38c1-0fbf-4db6-a491-299b9ee57d6c",
+      "name": "HTTP - Supabase Tenant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        860,
+        200
+      ],
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/tenant_profiles",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "tenant"
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "select",
+              "value": "rut,company_name,chatwoot_account_id,chatwoot_inbox_id,botpress_workspace_id,botpress_bot_id,odoo_company_id"
+            },
+            {
+              "name": "rut",
+              "value": "eq.={{$json[\"rut\"]}}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6a6ffb61-268b-4b4d-a3e2-7de69029a05c",
+      "name": "Function - Build Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        280
+      ],
+      "parameters": {
+        "functionCode": "const contactRecord = (item.contacts || [])[0];\nif (!contactRecord) {\n  throw new Error('Contact not found in Supabase (contacts.clerk_user_id)');\n}\nconst tenantRecord = (item.tenant || [])[0];\nif (!tenantRecord) {\n  throw new Error('Tenant profile not found for provided RUT');\n}\nitem.context = {\n  rut: item.rut || contactRecord.rut,\n  user_id: item.user_id,\n  clerk_user_id: contactRecord.clerk_user_id,\n  company_name: tenantRecord.company_name,\n  chatwoot_account_id: tenantRecord.chatwoot_account_id,\n  chatwoot_inbox_id: tenantRecord.chatwoot_inbox_id,\n  botpress_workspace_id: tenantRecord.botpress_workspace_id,\n  botpress_bot_id: tenantRecord.botpress_bot_id,\n  odoo_company_id: tenantRecord.odoo_company_id,\n  contact: {\n    id: contactRecord.id,\n    name: contactRecord.name,\n    email: contactRecord.email,\n    phone: contactRecord.phone,\n    source: contactRecord.source\n  },\n  raw_payload: item.raw_payload\n};\nreturn item;"
+      }
+    },
+    {
+      "id": "a1d67f39-6930-4d88-8b75-ecfc74eb31ae",
+      "name": "HTTP - Odoo Search (JSON-RPC)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        1320,
+        200
+      ],
+      "parameters": {
+        "url": "={{$env.ODOO_URL}}/jsonrpc",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "odooSearch"
+        },
+        "body": "={{({\"jsonrpc\":\"2.0\",\"method\":\"call\",\"params\":{\"service\":\"object\",\"method\":\"execute_kw\",\"args\":[ $env.ODOO_DB, Number($env.ODOO_USER_ID), $env.ODOO_API_KEY, \"res.partner\",\"search_read\",[[[\"vat\",\"=\", $json.context.rut ]]],{\"limit\":1,\"fields\":[\"id\",\"email\",\"phone\",\"mobile\",\"name\"]}]},\"id\":1})}}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a293d88b-b6d8-4af5-8a9f-708b317e7428",
+      "name": "Function - Prepare Odoo Upsert",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        280
+      ],
+      "parameters": {
+        "functionCode": "const searchResult = item.odooSearch?.result || [];\nconst partner = Array.isArray(searchResult) ? searchResult[0] : null;\nitem.odoo_partner_id = partner?.id ?? null;\nconst payload = {\n  name: item.context.contact.name,\n  email: item.context.contact.email,\n  phone: item.context.contact.phone,\n  mobile: item.context.contact.phone,\n  vat: item.context.rut,\n};\nitem.odoo_operation = partner ? 'write' : 'create';\nitem.odoo_args = partner ? [[partner.id], payload] : [payload];\nreturn item;"
+      }
+    },
+    {
+      "id": "7b8b3847-4a4e-4e2a-8e1b-8a50d29d8586",
+      "name": "HTTP - Odoo Upsert Partner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        1760,
+        280
+      ],
+      "parameters": {
+        "url": "={{$env.ODOO_URL}}/jsonrpc",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "odooUpsert"
+        },
+        "body": "={{({\"jsonrpc\":\"2.0\",\"method\":\"call\",\"params\":{\"service\":\"object\",\"method\":\"execute_kw\",\"args\":[ $env.ODOO_DB, Number($env.ODOO_USER_ID), $env.ODOO_API_KEY, \"res.partner\", item.odoo_operation, item.odoo_args ]},\"id\":2})}}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5bd51ab1-ecb8-4e97-aeab-fd0eca25c70c",
+      "name": "Function - Persist Partner ID",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        280
+      ],
+      "parameters": {
+        "functionCode": "const result = item.odooUpsert?.result;\nif (!item.odoo_partner_id && typeof result === 'number') {\n  item.odoo_partner_id = result;\n}\nitem.sync_metadata = {\n  rut: item.context.rut,\n  user_id: item.context.user_id,\n  source: item.context.contact.source,\n  contact_id: item.context.contact.id,\n  odoo_partner_id: item.odoo_partner_id,\n  chatwoot_inbox_id: item.context.chatwoot_inbox_id,\n  botpress_bot_id: item.context.botpress_bot_id\n};\nreturn item;"
+      }
+    },
+    {
+      "id": "49b7e29f-5706-476e-af96-4c6fe048141d",
+      "name": "HTTP - Chatwoot Upsert Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        2200,
+        280
+      ],
+      "parameters": {
+        "url": "={{$env.CHATWOOT_BASE_URL}}/api/v1/accounts/{{$json.context.chatwoot_account_id}}/contacts",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "chatwootContact"
+        },
+        "body": "={{({\n  identifier: $json.context.clerk_user_id,\n  name: $json.context.contact.name || $json.context.user_id,\n  email: $json.context.contact.email,\n  phone_number: $json.context.contact.phone,\n  inbox_id: $json.context.chatwoot_inbox_id,\n  custom_attributes: {\n    rut: $json.context.rut,\n    tenant_inbox: `tenant-${$json.context.rut}`,\n    odoo_partner_id: $json.odoo_partner_id\n  }\n})}}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "api_access_token",
+              "value": "={{$env.CHATWOOT_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fbc97c1c-a575-483c-a3f8-76453afc2fb9",
+      "name": "HTTP - Botpress Context Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        2420,
+        280
+      ],
+      "parameters": {
+        "url": "={{$env.BOTPRESS_API_BASE}}/workspaces/{{$json.context.botpress_workspace_id}}/bots/{{$json.context.botpress_bot_id}}/users/{{$json.context.clerk_user_id}}/context",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "body": "={{({\n  context: {\n    rut: $json.context.rut,\n    company_name: $json.context.company_name,\n    user_name: $json.context.contact.name,\n    user_phone: $json.context.contact.phone,\n    user_email: $json.context.contact.email,\n    odoo_partner_id: $json.odoo_partner_id\n  }\n})}}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.BOTPRESS_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "9bf8382b-2f15-4d5e-8cb2-e4b39ec80deb",
+      "name": "Supabase - Log contact_sync",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        280
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "schema": "public",
+        "table": "event_log",
+        "columns": "rut,user_id,event,metadata",
+        "values": "={{[{\"rut\": $json.context.rut, \"user_id\": $json.context.user_id, \"event\": \"contact_sync\", \"metadata\": $json.sync_metadata}]}}"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "Supabase Service Role (env)",
+          "name": "Supabase Service Role (env)"
+        }
+      }
+    },
+    {
+      "id": "6a914f33-6b53-4c79-8cc2-6a39ae46b5ad",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2860,
+        280
+      ],
+      "parameters": {
+        "responseBody": "={{({\n  status: 'synced',\n  rut: $json.context.rut,\n  odoo_partner_id: $json.odoo_partner_id,\n  chatwoot_contact_id: $json.chatwootContact?.payload?.contact?.id || $json.chatwootContact?.id\n})}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Dashboard User Active": {
+      "main": [
+        [
+          {
+            "node": "Set - Normalize Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Supabase Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Supabase Contact": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Supabase Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Supabase Tenant": {
+      "main": [
+        [
+          {
+            "node": "Function - Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Build Context": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Odoo Search (JSON-RPC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Odoo Search (JSON-RPC)": {
+      "main": [
+        [
+          {
+            "node": "Function - Prepare Odoo Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Prepare Odoo Upsert": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Odoo Upsert Partner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Odoo Upsert Partner": {
+      "main": [
+        [
+          {
+            "node": "Function - Persist Partner ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Persist Partner ID": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Chatwoot Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Chatwoot Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Botpress Context Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Botpress Context Sync": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Log contact_sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Log contact_sync": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "versionId": "a55eddb1-ec94-4eea-8d17-6e01983270da",
+  "pinData": {},
+  "tags": [
+    {
+      "id": "mcp",
+      "name": "mcp"
+    }
+  ]
+}

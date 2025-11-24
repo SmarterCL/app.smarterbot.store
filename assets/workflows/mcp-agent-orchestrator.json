@@ -1,0 +1,390 @@
+{
+  "name": "MCP - Agent Orchestrator (Dashboard → MCP Context Hub)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateVersion": "1.0.0",
+    "description": "Answers dashboard agent queries using Supabase context before calling MCP"
+  },
+  "nodes": [
+    {
+      "id": "b8c6205f-472d-4a7e-bbb8-a08de71e6b0c",
+      "name": "Webhook - Agent Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        260
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mcp-agent-request",
+        "responseMode": "responseNode",
+        "options": {
+          "responseContentType": "application/json"
+        }
+      },
+      "webhookId": "mcp-agent-request"
+    },
+    {
+      "id": "95c131f5-6d31-4e33-a1d6-31a45eac8fcf",
+      "name": "Set - Normalize Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        420,
+        260
+      ],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "user_id",
+              "value": "={{$json[\"body\"][\"user_id\"]}}"
+            },
+            {
+              "name": "rut",
+              "value": "={{$json[\"body\"][\"rut\"]}}"
+            },
+            {
+              "name": "question",
+              "value": "={{$json[\"body\"][\"question\"] || $json[\"body\"][\"intent\"]}}"
+            }
+          ],
+          "json": [
+            {
+              "name": "raw_payload",
+              "value": "={{$json[\"body\"]}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ab9d8c99-f118-4a13-a545-b01a9ca6f7b5",
+      "name": "HTTP - Supabase Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        640,
+        180
+      ],
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/contacts",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "contacts"
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "select",
+              "value": "id,name,email,phone,source,rut,clerk_user_id"
+            },
+            {
+              "name": "clerk_user_id",
+              "value": "eq.={{$json[\"user_id\"]}}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f703e131-d0a7-4e69-ba31-a6b3b2e80ce9",
+      "name": "HTTP - Supabase Tenant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        640,
+        360
+      ],
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/tenant_profiles",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "tenant"
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "select",
+              "value": "rut,company_name,plan,industry,chatwoot_inbox_id,botpress_workspace_id,botpress_bot_id"
+            },
+            {
+              "name": "rut",
+              "value": "eq.={{$json[\"rut\"]}}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5b52f3c7-7260-41a8-be4f-bfd9d16a16c9",
+      "name": "HTTP - Supabase Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        880,
+        260
+      ],
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/event_log",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {
+          "responsePropertyName": "events"
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "select",
+              "value": "inserted_at,event,metadata"
+            },
+            {
+              "name": "rut",
+              "value": "eq.={{$json[\"rut\"]}}"
+            },
+            {
+              "name": "order",
+              "value": "inserted_at.desc"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4d7d4574-1ef1-4a48-afd1-db8adf27ef59",
+      "name": "Function - Build MCP Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        260
+      ],
+      "parameters": {
+        "functionCode": "const contact = (item.contacts || [])[0];\nif (!contact) { throw new Error('Contact not found for clerk_user_id provided'); }\nconst tenant = (item.tenant || [])[0];\nif (!tenant) { throw new Error('Tenant profile missing for provided RUT'); }\nconst events = (item.events || []).slice(0,5);\nitem.mcp_context = {\n  rut: item.rut || contact.rut,\n  user_id: item.user_id,\n  question: item.question,\n  tenant: tenant,\n  contact: {\n    id: contact.id,\n    name: contact.name,\n    email: contact.email,\n    phone: contact.phone,\n    source: contact.source\n  },\n  latest_events: events\n};\nreturn item;"
+      }
+    },
+    {
+      "id": "8a2ff36f-104e-42b1-8bca-888cb4f9e8ff",
+      "name": "HTTP - MCP Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 7,
+      "position": [
+        1320,
+        260
+      ],
+      "parameters": {
+        "url": "={{$env.MCP_AGENT_URL}}/agent/route",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "body": "={{({ context: $json.mcp_context, instruction: 'Answer the user question using provided Supabase context before hitting downstream services.' })}}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_AGENT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0dddc939-0db1-426b-bac3-2b9217fa62f3",
+      "name": "Supabase - Log agent_request",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        260
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "schema": "public",
+        "table": "event_log",
+        "columns": "rut,user_id,event,metadata",
+        "values": "={{[{\"rut\": $json.mcp_context.rut, \"user_id\": $json.user_id, \"event\": \"agent_request\", \"metadata\": { question: $json.question, mcp_response: $json['HTTP - MCP Agent']?.result || $json } }]}}"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "Supabase Service Role (env)",
+          "name": "Supabase Service Role (env)"
+        }
+      }
+    },
+    {
+      "id": "4394c699-9285-4bc0-8dfb-3ac947c39852",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        260
+      ],
+      "parameters": {
+        "responseBody": "={{({ status: 'answered', rut: $json.mcp_context.rut, answer: $json['HTTP - MCP Agent']?.data || $json['HTTP - MCP Agent'], metadata: $json.mcp_context })}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Agent Request": {
+      "main": [
+        [
+          {
+            "node": "Set - Normalize Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Supabase Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Supabase Contact": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Supabase Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Supabase Tenant": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Supabase Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Supabase Activity": {
+      "main": [
+        [
+          {
+            "node": "Function - Build MCP Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Build MCP Context": {
+      "main": [
+        [
+          {
+            "node": "HTTP - MCP Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - MCP Agent": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Log agent_request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Log agent_request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "versionId": "a5221fdd-3941-4cb2-a799-d4d1e25966e8",
+  "pinData": {},
+  "tags": [
+    {
+      "id": "mcp",
+      "name": "mcp"
+    }
+  ]
+}

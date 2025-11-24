@@ -1,0 +1,71 @@
+name: smarteros-storefront
+repository: https://github.com/SmarterCL/tienda.smarterbot.cl
+role: storefront_pos
+description: >
+  Experiencia de compra web/POS para tiendas pequeñas. Expone catálogo,
+  checkout y seguimiento de pedidos sincronizados con Odoo y la capa de
+  pagos centralizada.
+
+depends_on:
+  - service: odoo
+    reason: catálogo, precios, stock, boletas
+  - service: pay
+    reason: routing de PSP y confirmación de pagos
+  - service: supabase
+    reason: identidad de clientes (rut) y timeline de compras
+
+public_endpoints:
+  - url: https://tienda.smarterbot.cl
+    purpose: storefront + backoffice POS
+
+private_services:
+  - name: checkout_api
+    path: /api/checkout
+    consumers: pos_tablet, whatsapp_bot
+    notes: valida stock en Odoo y delega cobro a pay service
+  - name: catalog_sync
+    type: scheduler
+    interval: "*/5 * * * *"
+    flow: odoo.product -> storefront cache
+  - name: order_webhooks
+    path: /api/webhooks/pay
+    notes: recibe confirmaciones desde `pay` y actualiza UI
+
+auth:
+  session:
+    provider: clerk
+    shared_with: app.smarterbot.cl
+  customer_identity: rut
+  staff_identity: clerk + magic links
+
+data_contracts:
+  - name: product_snapshot
+    source: odoo
+    schema: sku, name, price_gross, tax_code, stock_available
+  - name: order_event
+    sink: supabase.sales_history
+    schema: order_id, customer_rut, amount, status, timestamp
+
+policies:
+  - Checkout usa hosted fields / redirect provistos por https://pay.smarterbot.cl, sin capturar PAN/CVV localmente.
+  - Catálogo, precios y stock tienen como source-of-truth a Odoo; cambios manuales deben rechazarse.
+  - Webhooks de pago deben validar firma HMAC del servicio pay antes de actualizar UI.
+
+agent_permissions:
+  can_edit:
+    - ui_theme
+    - landing copy
+    - product_cards layout
+    - integrations con analytics
+  cannot_edit:
+    - pricing_rules (delegado a Odoo)
+    - tax_rules
+    - stock_adjustments manuales
+
+release:
+  method: vercel_deploy
+  env: production
+  checklist:
+    - sync catalog cache
+    - smoke test checkout sandbox
+    - validar webhook /api/webhooks/pay
