@@ -40,7 +40,7 @@ Environment: Production ✅
 ### 5. NEXT_PUBLIC_APP_URL
 ```
 Key: NEXT_PUBLIC_APP_URL
-Value: https://app.smarterbot.cl
+Value: https://app.smarterbot.store
 Environment: Production ✅
 ```
 
@@ -70,7 +70,7 @@ Environment: Production ✅
 1. ✅ Click "Save" después de cada variable
 2. ✅ Vercel rebuildeará automáticamente
 3. ✅ Espera 2-3 minutos
-4. ✅ Visita: https://app.smarterbot.cl
+4. ✅ Visita: https://app.smarterbot.store
 5. ✅ NO debe mostrar error de configuración
 
 ---
@@ -87,7 +87,7 @@ Environment: Production ✅
 
 - [ ] Variables agregadas en Vercel
 - [ ] Redeploy completado
-- [ ] https://app.smarterbot.cl funciona
+- [ ] https://app.smarterbot.store funciona
 - [ ] Login de Clerk funciona
 - [ ] Dashboard se muestra correctamente
 

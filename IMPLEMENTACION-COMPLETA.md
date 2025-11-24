@@ -2,7 +2,7 @@
 
 ## 📋 Resumen Ejecutivo
 
-Se ha implementado exitosamente un dashboard completo de automatizaciones N8N en `app.smarterbot.cl` que:
+Se ha implementado exitosamente un dashboard completo de automatizaciones N8N en `app.smarterbot.store` que:
 
 1. ✅ Lee templates dinámicamente desde `github.com/SmarterCL/n8n-workflows`
 2. ✅ Muestra 10 workflows con paginación
@@ -91,8 +91,8 @@ GITHUB_TOKEN=ghp_xxx  # Opcional, para rate limits
 ## 🔗 URLs de Acceso
 
 ### Producción
-- **Dashboard**: https://app.smarterbot.cl/dashboard/automatizaciones
-- **API**: https://app.smarterbot.cl/api/workflows
+- **Dashboard**: https://app.smarterbot.store/dashboard/automatizaciones
+- **API**: https://app.smarterbot.store/api/workflows
 - **N8N**: https://n8n.smarterbot.cl
 
 ### Local (Testing)
@@ -261,7 +261,7 @@ El cache dura 10 minutos. Para forzar actualización:
 
 ## 📞 Soporte
 
-- **Repo**: https://github.com/SmarterCL/app.smarterbot.cl
+- **Repo**: https://github.com/SmarterCL/app.smarterbot.store
 - **Templates**: https://github.com/SmarterCL/n8n-workflows
 - **N8N**: https://n8n.smarterbot.cl
 

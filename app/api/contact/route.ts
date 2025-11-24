@@ -30,7 +30,7 @@ async function sendEmails(payload: Required<Pick<ContactPayload, 'name' | 'email
           <h2>¡Gracias, ${payload.name}!</h2>
           <p>Recibimos tu mensaje y te responderemos muy pronto.</p>
           <p><strong>Mensaje:</strong><br/>${(payload.message || '').replace(/</g, '&lt;')}</p>
-          <p>Puedes acceder al panel central en <a href="https://app.smarterbot.cl" target="_blank">app.smarterbot.cl</a>.</p>
+          <p>Puedes acceder al panel central en <a href="https://app.smarterbot.store" target="_blank">app.smarterbot.store</a>.</p>
           <hr />
           <small>Smarter OS</small>
         </div>`,

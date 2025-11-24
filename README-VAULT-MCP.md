@@ -277,7 +277,7 @@ curl https://mcp.smarterbot.cl/api/services \
 
 ```bash
 # Desde tu proyecto local
-cd ~/dev/2025/app.smarterbot.cl
+cd ~/dev/2025/app.smarterbot.store
 
 # Commit los cambios de docs (si los hiciste)
 git add .env.example README-VAULT-MCP.md
@@ -301,7 +301,7 @@ Si querés que tu app lea secretos **en runtime** desde Vault (en vez de hardcod
 ### 5.1 Instalar SDK de Vault
 
 ```bash
-cd ~/dev/2025/app.smarterbot.cl
+cd ~/dev/2025/app.smarterbot.store
 pnpm add @hashicorp/vault-client
 ```
 

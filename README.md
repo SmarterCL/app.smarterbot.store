@@ -1,8 +1,8 @@
 # SmarterOS Frontend
 
-SmarterOS is the operations hub for SmarterBot customers. This repo hosts the public marketing page (`/`) and the authenticated dashboard (`/dashboard`) used in the `app.smarterbot.cl` subdomain. The UI has been restyled to match the SmarterOS brand: a dark grid background, monochrome accents, and a consistent typography system.
+SmarterOS is the operations hub for SmarterBot customers. This repo hosts the authenticated dashboard application (`/dashboard`) used at the `app.smarterbot.store` subdomain. The root path (`/`) redirects to the dashboard. The UI has been restyled to match the SmarterOS brand: a dark grid background, monochrome accents, and a consistent typography system.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/smarterbotcl/app-smarterbot-cl)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/smarterbotcl/app-smarterbot-store)
 
 ## ✨ Latest Features
 
@@ -221,7 +221,7 @@ The repo uses the flat ESLint config (`eslint.config.mjs`) with `eslint-config-n
 
 ## Deployment
 
-The main branch is deployed on Vercel to `app.smarterbot.cl`. Pushing to `main` triggers an automatic deployment. Use preview deployments for QA before merging large UI updates.
+The main branch is deployed on Vercel to `app.smarterbot.store`. Pushing to `main` triggers an automatic deployment. Use preview deployments for QA before merging large UI updates.
 
 ## Contributing
 
@@ -234,7 +234,7 @@ For support or design requests, reach the SmarterBot team on Slack or at `soport
 ## 📂 Project Structure
 
 ```
-app-smarterbot-cl/
+app-smarterbot-store/
 ├── app/
 │   ├── dashboard/
 │   │   ├── automatizaciones/    # ✨ N8N Workflows Dashboard
@@ -242,7 +242,7 @@ app-smarterbot-cl/
 │   │   └── tenant/              # Tenant Management
 │   ├── api/
 │   │   └── workflows/           # ✨ Workflows API
-│   └── page.tsx                 # Landing page
+│   └── page.tsx                 # Redirects to dashboard
 ├── components/
 │   └── ui/                      # Shadcn UI components
 ├── lib/                         # Utilities

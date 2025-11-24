@@ -2,7 +2,7 @@
 
 ## 📋 Implementación Completada
 
-Se ha implementado un dashboard completo para gestionar workflows de N8N en `app.smarterbot.cl`.
+Se ha implementado un dashboard completo para gestionar workflows de N8N en `app.smarterbot.store`.
 
 ### ✅ Características Implementadas
 
@@ -85,8 +85,8 @@ N8N_API_KEY=your_n8n_api_key
 
 ### 📍 Rutas
 
-- Dashboard: `https://app.smarterbot.cl/dashboard/automatizaciones`
-- API: `https://app.smarterbot.cl/api/workflows`
+- Dashboard: `https://app.smarterbot.store/dashboard/automatizaciones`
+- API: `https://app.smarterbot.store/api/workflows`
 - N8N: `https://n8n.smarterbot.cl`
 
 ### 🔗 Integración con N8N

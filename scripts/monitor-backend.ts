@@ -15,7 +15,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const HEALTH_ENDPOINT = process.env.HEALTH_ENDPOINT || 'https://app.smarterbot.cl/api/health'
+const HEALTH_ENDPOINT = process.env.HEALTH_ENDPOINT || 'https://app.smarterbot.store/api/health'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -40,7 +40,7 @@ async function checkHealth() {
     const overallOk = data.ok === true
     
     await supabase.from('external_health').insert({
-      service: 'app.smarterbot.cl',
+      service: 'app.smarterbot.store',
       status: overallOk ? 'ok' : 'degraded',
       latency_ms: latency,
       metadata: data,
@@ -52,7 +52,7 @@ async function checkHealth() {
     const latency = Date.now() - started
     
     await supabase.from('external_health').insert({
-      service: 'app.smarterbot.cl',
+      service: 'app.smarterbot.store',
       status: 'error',
       latency_ms: latency,
       error_message: err.message,
