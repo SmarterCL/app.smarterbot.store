@@ -13,13 +13,7 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
-    try {
-      await auth.protect()
-    } catch (error) {
-      console.error("Clerk middleware error:", error)
-      // Allow request to proceed if Clerk fails
-      return
-    }
+    await auth.protect()
   }
 })
 
