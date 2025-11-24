@@ -4,17 +4,14 @@ import { ClerkWrapper } from "@/components/clerk-wrapper"
 import { esES } from "@clerk/localizations"
 import Script from "next/script"
 import { Analytics } from '@vercel/analytics/react'
-import { Onest } from "next/font/google"
 
 import "./globals.css"
 
-const onest = Onest({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-})
+// Use system fonts for maximum compatibility and offline builds
+// The CSS variable --font-sans is still available for styling
+const fontVariable = "--font-sans"
 
-const baseBodyClass = `${onest.variable} font-sans antialiased`
+const baseBodyClass = `font-sans antialiased`
 
 const themeInitScript = `
 ;(function () {
@@ -67,7 +64,6 @@ export default function RootLayout({
   let hasValidClerkConfig = false
 
   try {
-    isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
     const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
     const secretKey = process.env.CLERK_SECRET_KEY
 
@@ -75,6 +71,10 @@ export default function RootLayout({
     const hasSecretKey = Boolean(secretKey && secretKey.startsWith("sk_") && secretKey.length > 10)
 
     hasValidClerkConfig = hasPublishableKey && hasSecretKey
+    
+    // Enable demo mode if explicitly set OR if no valid Clerk config is provided
+    // This allows the app to work out-of-the-box without configuration
+    isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !hasValidClerkConfig
   } catch (error) {
     console.warn("Environment variable check failed", error)
     isDemoMode = true
