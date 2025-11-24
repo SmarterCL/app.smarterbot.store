@@ -33,8 +33,6 @@ import {
   Zap,
 } from "lucide-react"
 
-import WorkflowsCompact from "@/components/workflows-compact"
-
 const overviewStats = [
   { title: "Mensajes enviados", value: "2,847", delta: "+12%", icon: MessageSquare },
   { title: "Contactos activos", value: "1,234", delta: "+5%", icon: Users },
@@ -430,7 +428,27 @@ export default function DashboardContent() {
             </TabsContent>
 
             <TabsContent value="automation" className="space-y-6 sm:space-y-8">
-              <WorkflowsCompact />
+              <Card className="border border-border bg-card shadow-sm">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-foreground">Automatizaciones</CardTitle>
+                      <CardDescription className="text-muted-foreground">Configura flujos automáticos</CardDescription>
+                    </div>
+                    <Button className="inline-flex items-center gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+                      <Plus className="h-4 w-4" /> Nueva automatización
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-xl border border-border bg-secondary py-12 text-center">
+                    <Zap className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No hay automatizaciones configuradas</p>
+                    <p className="mb-4 text-xs text-muted-foreground">Crea tu primera automatización para WhatsApp</p>
+                    <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Crear automatización</Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="qr" className="space-y-6 sm:space-y-8">

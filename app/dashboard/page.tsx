@@ -65,11 +65,15 @@ export default async function Dashboard() {
     redirect("/demo-dashboard")
   }
 
-  // Auth check - now works with Clerk middleware
-  const { userId } = await auth()
+  try {
+    const { userId } = await auth()
 
-  if (!userId) {
-    redirect("/sign-in")
+    if (!userId) {
+      redirect("/")
+    }
+  } catch (error) {
+    // If auth fails, redirect to home
+    redirect("/")
   }
 
   return (
