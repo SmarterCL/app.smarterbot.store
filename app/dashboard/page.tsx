@@ -55,8 +55,15 @@ function TenantDashboardClient() {
 }
 
 export default async function Dashboard() {
-  // Check if we're in demo mode
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true"
+  // Check if Clerk is properly configured
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const secretKey = process.env.CLERK_SECRET_KEY
+  const hasPublishableKey = Boolean(publishableKey && publishableKey.startsWith("pk_") && publishableKey.length > 10)
+  const hasSecretKey = Boolean(secretKey && secretKey.startsWith("sk_") && secretKey.length > 10)
+  const hasValidClerkConfig = hasPublishableKey && hasSecretKey
+
+  // Check if we're in demo mode (explicitly set or no valid Clerk config)
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !hasValidClerkConfig
   const shouldRenderAuthDebug =
     process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === "true"
 

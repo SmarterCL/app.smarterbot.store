@@ -39,9 +39,24 @@ pnpm dev
 
 The app runs on `http://localhost:3000`.
 
-### Required Environment Variables
+### Quick Start (Demo Mode)
 
-Create `.env.local` with:
+The app now works out-of-the-box! If no Clerk configuration is detected, it automatically runs in **demo mode**, allowing you to explore the dashboard without any setup.
+
+To explicitly enable demo mode, copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+The default configuration has `NEXT_PUBLIC_DEMO_MODE=true`, which:
+- Bypasses Clerk authentication
+- Redirects `/dashboard` to `/demo-dashboard`  
+- Uses mock data for testing
+
+### Required Environment Variables (Production)
+
+For production use with real authentication, create `.env.local` with:
 
 ```bash
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
