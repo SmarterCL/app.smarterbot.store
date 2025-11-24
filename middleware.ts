@@ -14,7 +14,6 @@ export default clerkMiddleware({
     "/api/contacts/test",
     "/api/workflows",
     "/api/workflows/:path*",
-    "/dashboard",
     "/dashboard/automatizaciones",
     "/dashboard/automatizaciones/:path*",
     "/favicon.ico",
