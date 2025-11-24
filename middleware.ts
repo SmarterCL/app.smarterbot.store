@@ -8,17 +8,18 @@ const isPublicRoute = createRouteMatcher([
   "/api/mcp/ping",
   "/api/health",
   "/api/contacts/test",
+  "/demo-dashboard(.*)",
 ])
 
 export default clerkMiddleware(async (auth, request) => {
-  // Safe guard: if Clerk is not properly configured, allow access
-  try {
-    if (!isPublicRoute(request)) {
+  if (!isPublicRoute(request)) {
+    try {
       await auth.protect()
+    } catch (error) {
+      console.error("Clerk middleware error:", error)
+      // Allow request to proceed if Clerk fails
+      return
     }
-  } catch (error) {
-    console.error("Clerk middleware error:", error)
-    // In case of Clerk failure, allow request to proceed
   }
 })
 
