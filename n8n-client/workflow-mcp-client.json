@@ -1,0 +1,57 @@
+{
+  "name": "SmarterOS MCP Client",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/mcp/route",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\"type\":\"lead.create\",\"data\":{\"email\":\"demo@example.com\"},\"meta\":{\"source\":\"n8n\",\"tenant_rut\":\"76.123.456-7\"}}"
+      },
+      "id": "McpRequest",
+      "name": "MCP Route",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [540, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "placeholder",
+          "name": "MCP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "email",
+              "value": "demo@example.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetData",
+      "name": "Set Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [360, 300]
+    }
+  ],
+  "connections": {
+    "Set Data": {
+      "main": [
+        [
+          {
+            "node": "MCP Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
