@@ -12,6 +12,7 @@
     "clean": "rm -rf dist .tsbuildinfo"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.73",
     "@clerk/localizations": "^3.27.0",
     "@clerk/nextjs": "latest",
     "@hookform/resolvers": "^3.9.1",
@@ -45,6 +46,7 @@
     "@radix-ui/react-tooltip": "latest",
     "@supabase/supabase-js": "^2.50.0",
     "@vercel/analytics": "^1.5.0",
+    "ai": "^3.4.33",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -55,7 +57,7 @@
     "input-otp": "latest",
     "jose": "^6.1.1",
     "lucide-react": "^0.454.0",
-    "next": "15.2.4",
+    "next": "16.0.7",
     "next-themes": "latest",
     "react": "^19",
     "react-day-picker": "latest",
@@ -67,7 +69,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "vaul": "latest",
-    "zod": "^3.24.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22",
