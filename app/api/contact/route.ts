@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 type ContactPayload = {
   name?: string
@@ -7,60 +6,111 @@ type ContactPayload = {
   message?: string
   phone?: string | null
   source?: string | null
+  company?: string | null
 }
 
-async function sendEmails(payload: Required<Pick<ContactPayload, 'name' | 'email' | 'message'>> & { phone?: string | null; source?: string | null }) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY
-  const RESEND_FROM = process.env.RESEND_FROM || 'no-reply@smarterbot.cl'
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'smarterbotcl@gmail.com'
-  if (!RESEND_API_KEY) return
+const MAILGUN_API_BASE = "https://api.mailgun.net/v3"
+const MAILGUN_VALIDATION_ENDPOINT = "https://api.mailgun.net/v4/address/validate"
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+async function validateEmail(address: string, apiKey: string) {
+  const validationResponse = await fetch(`${MAILGUN_VALIDATION_ENDPOINT}?address=${encodeURIComponent(address)}`, {
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
+      Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`,
     },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [payload.email],
-      subject: 'Gracias por contactar a Smarter OS',
-      html: `
-        <div style="font-family:Inter,system-ui,Segoe UI,Arial,sans-serif">
-          <h2>¡Gracias, ${payload.name}!</h2>
-          <p>Recibimos tu mensaje y te responderemos muy pronto.</p>
-          <p><strong>Mensaje:</strong><br/>${(payload.message || '').replace(/</g, '&lt;')}</p>
-          <p>Puedes acceder al panel central en <a href="https://app.smarterbot.cl" target="_blank">app.smarterbot.cl</a>.</p>
-          <hr />
-          <small>Smarter OS</small>
-        </div>`,
-    }),
+    cache: "no-store",
   })
-  // admin copy
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+
+  if (!validationResponse.ok) {
+    const errorText = await validationResponse.text()
+    throw new Error(`Mailgun validation error: ${validationResponse.status} ${errorText}`)
+  }
+
+  const validation = await validationResponse.json()
+  return validation?.is_valid === true
+}
+
+async function sendViaMailgun({
+  name,
+  email,
+  company,
+  message,
+  apiKey,
+  domain,
+  fromEmail,
+  toEmail,
+}: {
+  name: string
+  email: string
+  company?: string | null
+  message: string
+  apiKey: string
+  domain: string
+  fromEmail: string
+  toEmail: string
+}) {
+  const subject = "Contacto landing Odoo + SmarterOS"
+  const html = `
+      <p><strong>Nombre:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Empresa:</strong> ${company || "N/A"}</p>
+      <p><strong>Mensaje:</strong></p>
+      <p>${message}</p>
+    `
+
+  const formData = new URLSearchParams()
+  formData.append("from", fromEmail)
+  formData.append("to", toEmail)
+  formData.append("subject", subject)
+  formData.append("text", `Nombre: ${name}\nEmail: ${email}\nEmpresa: ${company || "N/A"}\n\n${message}`)
+  formData.append("html", html)
+
+  const mailgunResponse = await fetch(`${MAILGUN_API_BASE}/${domain}/messages`, {
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
+      Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`,
     },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [ADMIN_EMAIL],
-      subject: `Nuevo contacto: ${payload.name} <${payload.email}>`,
-      html: `
-        <div style="font-family:Inter,system-ui,Segoe UI,Arial,sans-serif">
-          <h3>Nuevo contacto</h3>
-          <ul>
-            <li><strong>Nombre:</strong> ${payload.name}</li>
-            <li><strong>Email:</strong> ${payload.email}</li>
-            <li><strong>WhatsApp:</strong> ${payload.phone || '-'}</li>
-            <li><strong>Source:</strong> ${payload.source || '-'}</li>
-          </ul>
-          <pre style="white-space:pre-wrap">${(payload.message || '').replace(/</g, '&lt;')}</pre>
-        </div>`,
-    }),
+    body: formData,
   })
-  return res.ok
+
+  if (!mailgunResponse.ok) {
+    const errorText = await mailgunResponse.text()
+    return NextResponse.json({ error: "Error enviando correo", details: errorText }, { status: 502 })
+  }
+
+  return NextResponse.json({ success: true })
+}
+
+async function sendViaFastApi(url: string, payload: unknown, apiKey?: string) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  })
+
+  const responseText = await response.text()
+  let responseJson: unknown
+  try {
+    responseJson = JSON.parse(responseText)
+  } catch {
+    responseJson = { raw: responseText }
+  }
+
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Error al llamar FastAPI", details: responseJson },
+      { status: 502 }
+    )
+  }
+
+  return NextResponse.json({ success: true, fastApi: responseJson })
 }
 
 export async function POST(req: NextRequest) {
@@ -71,30 +121,52 @@ export async function POST(req: NextRequest) {
     const message = (body.message || '').toString().trim()
     const phone = body.phone ? body.phone.toString().trim() : null
     const source = body.source ? body.source.toString().trim() : null
+    const company = body.company ? body.company.toString().trim() : null
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
-    const SUPABASE_URL = process.env.SUPABASE_URL
-    const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+    const mailgunApiKey = process.env.MAILGUN_API_KEY
+    const domain = process.env.MAILGUN_DOMAIN
+    const toEmail = process.env.MAILGUN_TO_EMAIL || "smarterbotcl@gmail.com"
+    const fromEmail = process.env.MAILGUN_FROM_EMAIL || (domain ? `contact@${domain}` : undefined)
+    const fastApiUrl = process.env.FASTAPI_CONTACT_URL
+    const fastApiKey = process.env.FASTAPI_API_KEY
+
+    // Validar email con Mailgun si está configurado
+    if (mailgunApiKey) {
+      try {
+        const isValidEmail = await validateEmail(email, mailgunApiKey)
+        if (!isValidEmail) {
+          return NextResponse.json({ error: "Email inválido según Mailgun" }, { status: 400 })
+        }
+      } catch (err) {
+        console.error("Mailgun validation failed:", err)
+        return NextResponse.json(
+          { error: "Error validando email en Mailgun" },
+          { status: 502 }
+        )
+      }
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
-    const { error } = await supabase
-      .from('contacts')
-      .insert([{ name, email, message, phone, source, domain: req.headers.get('host') || null }])
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    // Si hay FastAPI URL, enviar por allí
+    if (fastApiUrl) {
+      return sendViaFastApi(fastApiUrl, { name, email, company, message }, fastApiKey)
     }
 
-    // fire-and-forget emails (do not block response if it fails)
-    sendEmails({ name, email, message, phone, source }).catch(() => {})
+    // Fallback: enviar por Mailgun directo
+    if (!mailgunApiKey || !domain || !fromEmail) {
+      return NextResponse.json(
+        {
+          error:
+            "Falta configuración: define FASTAPI_CONTACT_URL o MAILGUN_API_KEY, MAILGUN_DOMAIN y MAILGUN_FROM_EMAIL",
+        },
+        { status: 500 }
+      )
+    }
 
-    return NextResponse.json({ ok: true })
+    return sendViaMailgun({ name, email, company, message, apiKey: mailgunApiKey, domain, fromEmail, toEmail })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
