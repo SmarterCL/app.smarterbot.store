@@ -1,0 +1,3 @@
+#!/bin/bash
+vercel env add NEXT_PUBLIC_SUPABASE_URL production <<< "https://rjfcmmzjlguiititkmyh.supabase.co"
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production <<< "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZmNtbXpqbGd1aWl0aXRrbXloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3OTk3MzUsImV4cCI6MjA3NzM3NTczNX0.IRj4EXZErrxcHetZNu5onhDTR3iEe5lMA--ireaR19A"
