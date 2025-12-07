@@ -1,258 +1,405 @@
-# SmarterOS Frontend
+# SmarterOS - Plataforma de Gestión Empresarial
 
-SmarterOS is the operations hub for SmarterBot customers. This repo hosts the public marketing page (`/`) and the authenticated dashboard (`/dashboard`) used in the `app.smarterbot.cl` subdomain. The UI has been restyled to match the SmarterOS brand: a dark grid background, monochrome accents, and a consistent typography system.
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/smarterbotcl/app-smarterbot-cl)
+## 🌟 Descripción
 
-## ✨ Latest Features
+SmarterOS es la plataforma integral para gestionar tu negocio completo. Este repositorio contiene el **Hub de Login/Onboarding** y **Dashboard Central** que da acceso a todos los módulos del ecosistema SmarterOS.
 
-### Dashboard de Automatizaciones N8N (Nov 2024) ✅
-- 🔄 **10 workflows reales** desde automation-manifest.json en GitHub
-- 📊 **Paginación funcional** (10 items por página)
-- 🎯 **Integración completa**: GitHub → API → Dashboard
-- 🎛️ **Control ON/OFF** por workflow (próximamente funcional)
-- ▶️ **Ejecución manual** con botón Play
-- 📈 **Estadísticas globales**: workflows activos, ejecuciones, totales
-- 🏷️ **7 categorías**: Odoo, Shopify, Marketing, WhatsApp, CRM, PDF, Backup
-- 🇪🇸 **100% en español**
-- 🎨 **UI moderna** con Shadcn/UI + badges con colores por categoría
-- 🔗 **API REST**: `api.smarterbot.cl/n8n/templates`
+### Módulos Integrados
 
-Ver: `/dashboard/automatizaciones` | Docs: `specs/N8N-AUTOMATION-INTEGRATION.md`
+- 🗨️ **CRM** - Gestión de clientes y WhatsApp Business
+- 📊 **ERP Odoo** - Sistema de gestión empresarial multi-tenant
+- ⚡ **Automatizaciones n8n** - Workflows sin código
+- 🤖 **AI Playground** - Prueba modelos GPT-4o y Claude
+- 📈 **KPI Metabase** - Dashboards y análisis de datos
+- 👥 **Multi-tenant** - Aislamiento por empresa/RUT
 
-## Tech Stack
+---
 
-- **Framework:** Next.js 15 (App Router, React 19)
-- **Auth:** Clerk (Google OAuth, email)
-- **Styling:** Tailwind CSS + custom design tokens (SmarterOS theme)
-- **Forms & Validation:** React Hook Form, Zod
-- **Charts & UI:** Shadcn UI components, Lucide icons, Recharts
-- **Automation:** N8N Integration (workflows dashboard)
-- **Protocol / Extensibility:** (Planned) Model Context Protocol server (`/mcp/server/index.ts`)
+## 🚀 Tech Stack
 
-## Getting Started
+### Frontend
+- **Framework:** Next.js 15 (App Router)
+- **React:** 19 con Server Components
+- **TypeScript:** 5 con strict mode
+- **Styling:** Tailwind CSS 3.4 + Shadcn/UI
+- **Icons:** Lucide React
+- **Forms:** React Hook Form + Zod
+- **Charts:** Recharts
+
+### Autenticación
+- **Clerk:** Autenticación con Google OAuth
+- **Middleware:** Protección de rutas con `clerkMiddleware`
+- **Localización:** Español (esES)
+
+### IA & APIs
+- **AI SDK:** Vercel AI SDK para streaming
+- **OpenAI:** GPT-4o, GPT-4o Mini
+- **Anthropic:** Claude 3.5 Sonnet
+- **Gateway:** AI Gateway (OIDC, sin claves expuestas)
+
+### Infraestructura
+- **Hosting:** Vercel (Edge Functions)
+- **Analytics:** Vercel Analytics
+- **Database:** Supabase (PostgreSQL)
+- **Protocol:** Model Context Protocol (MCP)
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+app/
+├── page.tsx                     # Landing page (pública)
+├── layout.tsx                   # Root layout con ClerkProvider
+├── globals.css                  # Estilos globales + Tailwind
+├── sign-in/[[...sign-in]]/      # Página de login (Clerk)
+├── sign-up/[[...sign-up]]/      # Página de registro (Clerk)
+├── dashboard/                   # Dashboard principal (protegido)
+│   ├── page.tsx                 # Vista principal con módulos
+│   ├── automatizaciones/        # Dashboard de workflows n8n
+│   ├── mcp/                     # Dashboard MCP
+│   └── tenant/                  # Gestión de tenants
+├── crm/                         # Página informativa CRM
+├── erp/                         # Página informativa ERP Odoo
+├── n8n/                         # Página informativa n8n
+├── playground/                  # AI Playground (streaming)
+└── api/
+    ├── chat/                    # Endpoint de IA (streaming)
+    ├── health/                  # Health check
+    ├── mcp/                     # Model Context Protocol
+    ├── tenants/                 # API de tenants
+    └── ...                      # Otros endpoints
+
+middleware.ts                    # Clerk auth middleware
+components/                      # Componentes reutilizables
+├── ui/                          # Shadcn/UI components
+├── dashboard-content.tsx        # Contenido del dashboard
+├── tenant-selector.tsx          # Selector de tenant
+└── ...
+```
+
+---
+
+## 🛠️ Instalación y Desarrollo
+
+### Requisitos Previos
+
+- Node.js 18+
+- pnpm 8+
+- Cuenta de Vercel (para deploy)
+- Cuenta de Clerk (para autenticación)
+
+### 1. Clonar el Repositorio
+
+```bash
+git clone https://github.com/SmarterCL/app.smarterbot.store.git
+cd app.smarterbot.store
+```
+
+### 2. Instalar Dependencias
 
 ```bash
 pnpm install
+```
+
+### 3. Configurar Variables de Entorno
+
+Crea un archivo `.env.local` con las siguientes variables:
+
+```bash
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+
+# Supabase (opcional para desarrollo)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+
+# AI Gateway (configurado en Vercel Dashboard)
+# No se necesitan claves de OpenAI/Anthropic en código
+# AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1
+
+# Demo Mode (opcional)
+NEXT_PUBLIC_DEMO_MODE=false
+NEXT_PUBLIC_ENABLE_AUTH_DEBUG=false
+```
+
+### 4. Ejecutar en Desarrollo
+
+```bash
 pnpm dev
 ```
 
-The app runs on `http://localhost:3000`.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-### Required Environment Variables
+---
 
-Create `.env.local` with:
+## 🎯 Páginas y Rutas
+
+### Rutas Públicas (sin autenticación)
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Landing page con hero y features |
+| `/sign-in` | Página de login (Clerk) |
+| `/sign-up` | Página de registro (Clerk) |
+
+### Rutas Protegidas (requieren autenticación)
+
+| Ruta | Descripción |
+|------|-------------|
+| `/dashboard` | Dashboard principal con módulos |
+| `/dashboard/automatizaciones` | Dashboard de workflows n8n |
+| `/dashboard/mcp` | Dashboard de MCP |
+| `/crm` | Información del módulo CRM |
+| `/erp` | Información del módulo ERP Odoo |
+| `/n8n` | Información de automatizaciones |
+| `/playground` | AI Playground (GPT-4o, Claude) |
+| `/settings` | Configuración de usuario |
+
+### API Endpoints
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/chat` | POST | Streaming de IA (GPT-4o, Claude) |
+| `/api/health` | GET | Health check |
+| `/api/tenants` | GET | Lista de tenants |
+| `/api/mcp/*` | * | Model Context Protocol |
+
+---
+
+## 🤖 AI Playground
+
+El AI Playground permite probar diferentes modelos de IA con streaming en tiempo real.
+
+### Características
+
+- ✅ Streaming de respuestas en tiempo real
+- ✅ Soporte para GPT-4o, GPT-4o Mini, Claude 3.5
+- ✅ Sin claves expuestas (AI Gateway con OIDC)
+- ✅ UI conversacional con historial
+- ✅ Selector de modelos dinámico
+
+### Uso
+
+1. Navega a `/playground`
+2. Selecciona un modelo (GPT-4o Mini, GPT-4o, Claude)
+3. Escribe tu prompt
+4. Presiona "Enviar" y ve la respuesta en streaming
+
+### Implementación Técnica
+
+```typescript
+// app/playground/page.tsx (cliente)
+import { useChat } from 'ai/react'
+
+const { messages, input, handleSubmit, isLoading } = useChat({
+  api: '/api/chat',
+  body: { model: 'gpt-4o-mini' }
+})
+```
+
+```typescript
+// app/api/chat/route.ts (servidor)
+import { streamText } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+
+const result = streamText({
+  model: openai('gpt-4o-mini'),
+  messages,
+})
+
+return result.toDataStreamResponse()
+```
+
+---
+
+## 🔒 Autenticación con Clerk
+
+### Configuración del Middleware
+
+```typescript
+// middleware.ts
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+])
+
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    await auth.protect()
+  }
+})
+```
+
+### Rutas Protegidas
+
+Todas las rutas excepto `/`, `/sign-in` y `/sign-up` requieren autenticación.
+
+---
+
+## 🎨 Theming y Estilos
+
+### Tailwind CSS
+
+El proyecto usa Tailwind CSS con una configuración personalizada:
+
+- **Colores:** Paleta SmarterOS (primary, secondary, accent)
+- **Tipografía:** Onest (Google Fonts)
+- **Componentes:** Shadcn/UI
+- **Animaciones:** Framer Motion
+
+### Tema Personalizado
+
+```typescript
+// app/layout.tsx
+const themeInitScript = `
+  var STORAGE_KEY = 'smarteros-theme';
+  var THEMES = ['theme-light', 'theme-bw'];
+  // ... lógica de theme switching
+`
+```
+
+---
+
+## 📦 Deploy en Vercel
+
+### 1. Desarrollo Local con Vercel CLI
 
 ```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
-CLERK_SECRET_KEY=sk_test_xxx
-NEXT_PUBLIC_ENABLE_AUTH_DEBUG=false
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+# Instalar Vercel CLI
+npm i -g vercel
+
+# Login
+vercel login
+
+# Desarrollo local con entorno de Vercel
+vercel dev
+
+# Deploy a preview
+vercel
+
+# Deploy a producción
+vercel --prod
 ```
 
-Set `NEXT_PUBLIC_ENABLE_AUTH_DEBUG=true` only while debugging user sessions; production deployments keep it `false`.
+### 2. Deploy desde Git
 
-### Production Environment Variables
+1. Conecta tu repositorio en [vercel.com](https://vercel.com)
+2. Configura las variables de entorno en el dashboard
+3. Deploy automático en cada push a `main`
 
-Set ONLY the following in Vercel for a stable deployment:
+### 3. Variables de Entorno en Vercel
 
-Required:
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `FASTAPI_URL`
- - `MCP_ENABLED` (set to `true` to activate MCP tools; omit or `false` keeps server dormant)
+Configura estas variables en el dashboard de Vercel:
 
-Optional (use only if referenced):
-- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`)
-- `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
-- `NEXT_PUBLIC_DEMO_MODE`
-- `RESEND_API_KEY`
- - `MCP_LOG_LEVEL` (`debug` | `info` | `warn` | `error`, default `info`)
+```
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SECRET_KEY
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
 
-Remove / do not set (not used by the Next.js app, can cause confusion):
-`anonpublic`, `service_rolesecret`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_USER`, `POSTGRES_PASSWORD`.
+**Nota:** El AI Gateway se configura desde el dashboard de Vercel, **no** se necesitan claves de OpenAI/Anthropic en el código.
 
-Verification scripts:
+---
+
+## 🏗️ Multi-Tenant (Futuro)
+
+El proyecto está preparado para multi-tenancy:
+
+### Estructura Futura
+
+```typescript
+// Cada tenant tendrá:
+- Slug único: empresa-ejemplo
+- RUT chileno: 12345678-9
+- Subdominios:
+  - crm.empresa-ejemplo.cl
+  - erp.empresa-ejemplo.cl
+  - n8n.empresa-ejemplo.cl
+```
+
+### Helpers Preparados
+
+```typescript
+// lib/tenant.ts (futuro)
+export function getTenantSlug(): string
+export function getTenantRut(): string
+export function getTenantSubdomain(service: string): string
+```
+
+---
+
+## 🧪 Testing
 
 ```bash
-pnpm ts-node scripts/env-audit.ts
-./scripts/env-verify.sh
-```
+# Type checking
+pnpm typecheck
 
-Production check endpoint: `/api/env/diagnostic`.
-
-### MCP Integration (Phase 1)
-
-The initial MCP scaffold adds:
-
-- `mcp/server/index.ts` – Minimal server using `@modelcontextprotocol/sdk` with an empty tool registry.
-- `app/api/mcp/ping/route.ts` – Health endpoint returning `{ ok: true, service: 'mcp', version }`.
-
-Activation:
-
-1. Set `MCP_ENABLED=true` in Vercel (or `.env.local`).
-2. (Future phases) Tools will respect Clerk auth and rate limits.
-
-If `MCP_ENABLED` is not true:
- - `/api/mcp/ping` returns `{ ok: false, disabled: true }`.
- - `/api/mcp/tool` returns 403 with `{ error: 'mcp_disabled' }`.
-
-### MCP Tenants Tools (Phase 2)
-
-Added tools (require authenticated Clerk user):
-
-- `tenants.list` – Lists active tenants for the current user (fields: `id, rut, business_name, active, created_at`).
-- `tenants.get` – Returns full tenant record by `id` (UUID) subject to RLS ownership.
- - `tenants.create` – Creates a new tenant (`rut`, `businessName`) bound to the authenticated user.
- - `tenants.updateServices` – Updates `services_enabled` flags for a tenant.
-
-Invocation (when enabled):
-
-```bash
-curl -X POST http://localhost:3000/api/mcp/tool \
-	-H 'Content-Type: application/json' \
-	-H 'Cookie: __session=YOUR_CLERK_SESSION_COOKIE' \
-	-d '{"name":"tenants.list"}'
-
-curl -X POST http://localhost:3000/api/mcp/tool \
-	-H 'Content-Type: application/json' \
-	-H 'Cookie: __session=YOUR_CLERK_SESSION_COOKIE' \
-	-d '{"name":"tenants.get","args":{"id":"<tenant-uuid>"}}'
-
-curl -X POST http://localhost:3000/api/mcp/tool \
-	-H 'Content-Type: application/json' \
-	-H 'Cookie: __session=YOUR_CLERK_SESSION_COOKIE' \
-	-d '{"name":"tenants.create","args":{"rut":"12.345.678-9","businessName":"Empresa Demo"}}'
-
-curl -X POST http://localhost:3000/api/mcp/tool \
-	-H 'Content-Type: application/json' \
-	-H 'Cookie: __session=YOUR_CLERK_SESSION_COOKIE' \
-	-d '{"name":"tenants.updateServices","args":{"id":"<tenant-uuid>","services":{"crm":true,"bot":false}}}'
-```
-
-Error cases:
-- Missing auth: `{ ok: false, error: 'unauthorized' }`
-- Disabled: `{ ok: false, error: 'mcp_disabled' }`
-- Tool not found: `{ ok: false, error: 'tool_not_found' }`
-- Validation (bad UUID): `{ ok: false, error: 'tool_error', message: 'Invalid uuid' }`
- - Missing required args: `{ ok: false, error: 'tool_error', message: 'rut' }` (or similar validation message)
-
-### MCP Invocation Logging (Phase 2.5)
-
-Each tool invocation logs a structured console entry:
-
-```
-console.info('[MCP_INVOCATION]', { userId, tool, durationMs })
-```
-
-Errors log:
-
-```
-console.warn('[MCP_INVOCATION_ERROR]', { userId, tool, durationMs, error })
-```
-
-Optional DB persistence (set `MCP_LOG_DB=true`): inserts into `mcp_invocations`:
-
-Columns:
-- `user_id` (Clerk user)
-- `tool`
-- `args` (JSON truncated)
-- `result` (JSON truncated)
-- `duration_ms`
-- `created_at` (server default now())
-
-Add table example (SQL):
-
-```sql
-create table if not exists mcp_invocations (
-	id uuid primary key default gen_random_uuid(),
-	user_id text not null,
-	tool text not null,
-	args text,
-	result text,
-	duration_ms integer not null,
-	created_at timestamptz not null default now()
-);
-create index on mcp_invocations (user_id);
-create index on mcp_invocations (tool);
-```
-
-Environment flags:
-- `MCP_ENABLED` – master switch.
-- `MCP_LOG_DB` – enable Supabase persistence.
-
-### Demo Mode
-
-Setting `NEXT_PUBLIC_DEMO_MODE=true` switches the landing page and `/dashboard` to demo flows that skip Clerk authentication and redirect to the in-memory demo dashboard (`/demo-dashboard`).
-
-## Project Structure Highlights
-
-- `app/page.tsx` – Public marketing/landing page with SmarterOS branding.
-- `app/dashboard/page.tsx` – Authenticated dashboard shell; uses Clerk server-side `auth()`.
-- `components/background-pattern.tsx` – Shared grid background rendered on both landing and dashboard pages.
-- `components/demo-dashboard-content.tsx` – In-memory CRUD simulator used in demo mode.
-- `middleware.ts` – Protects `/dashboard` routes while still allowing demo mode or unconfigured environments to fail gracefully.
-
-## Linting & Formatting
-
-```bash
+# Linting
 pnpm lint
+
+# Build production
+pnpm build
 ```
 
-The repo uses the flat ESLint config (`eslint.config.mjs`) with `eslint-config-next`. Prettier is not configured; code follows the conventions enforced by Next.js and the component library.
+---
 
-## Deployment
+## 📝 Scripts Disponibles
 
-The main branch is deployed on Vercel to `app.smarterbot.cl`. Pushing to `main` triggers an automatic deployment. Use preview deployments for QA before merging large UI updates.
+| Comando | Descripción |
+|---------|-------------|
+| `pnpm dev` | Desarrollo local (localhost:3000) |
+| `pnpm build` | Build de producción |
+| `pnpm start` | Ejecutar build de producción |
+| `pnpm lint` | Linting con ESLint |
+| `pnpm typecheck` | Type checking con TypeScript |
+| `pnpm clean` | Limpiar archivos de build |
 
-## Contributing
+---
 
-1. Create a feature branch.
-2. Run `pnpm lint` before opening a PR.
-3. Provide screenshots or Loom videos when altering UI layouts.
+## 🤝 Contribuir
 
-For support or design requests, reach the SmarterBot team on Slack or at `soporte@smarterbot.cl`.
+1. Fork el repositorio
+2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
+3. Commit: `git commit -m 'feat: agregar nueva funcionalidad'`
+4. Push: `git push origin feature/nueva-funcionalidad`
+5. Abre un Pull Request
 
-## 📂 Project Structure
+---
 
-```
-app-smarterbot-cl/
-├── app/
-│   ├── dashboard/
-│   │   ├── automatizaciones/    # ✨ N8N Workflows Dashboard
-│   │   ├── mcp/                 # MCP Tools
-│   │   └── tenant/              # Tenant Management
-│   ├── api/
-│   │   └── workflows/           # ✨ Workflows API
-│   └── page.tsx                 # Landing page
-├── components/
-│   └── ui/                      # Shadcn UI components
-├── lib/                         # Utilities
-├── mcp/                         # MCP Server
-├── specs/                       # ✨ Technical specifications
-└── styles/                      # Global styles
-```
+## 📄 Licencia
 
-## 🚀 New Features
+Propiedad de SmarterCL. Todos los derechos reservados.
 
-### Dashboard de Automatizaciones
-Control workflows de N8N desde la interfaz web:
-- **URL**: `/dashboard/automatizaciones`
-- **API**: `/api/workflows`
-- **Specs**: `specs/dashboard-automatizaciones.md`
+---
 
-#### 10 Workflows Implementados:
-1. WhatsApp Leads → CRM
-2. Agenda Confirmaciones
-3. Reporte Diario a Sheets
-4. Slack Notificaciones Ventas
-5. Email Marketing Automatizado
-6. Sync Shopify → Odoo
-7. Procesar Facturas PDF
-8. Bot AI WhatsApp
-9. Backup Automático Diario
-10. Monitor Redes Sociales
+## 🔗 Links Importantes
 
+- **Website:** [app.smarterbot.cl](https://app.smarterbot.cl)
+- **Documentación:** [docs.smarterbot.cl](https://docs.smarterbot.cl)
+- **Soporte:** [wa.me/56979540471](https://wa.me/56979540471)
+- **GitHub:** [github.com/SmarterCL](https://github.com/SmarterCL)
+
+---
+
+## 📞 Soporte
+
+¿Necesitas ayuda? Contáctanos:
+
+- 📱 WhatsApp: [+56 9 7954 0471](https://wa.me/56979540471)
+- 📧 Email: soporte@smarterbot.cl
+- 🌐 Web: [smarterbot.cl](https://smarterbot.cl)
+
+---
+
+**Hecho con ❤️ por el equipo de SmarterCL**
