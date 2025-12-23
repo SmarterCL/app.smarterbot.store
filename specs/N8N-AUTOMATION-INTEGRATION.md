@@ -17,7 +17,7 @@ GitHub (n8n-workflows)
    ↓ automation-manifest.json
 api.smarterbot.cl/n8n/templates
    ↓ REST API
-app.smarterbot.cl/dashboard/automatizaciones
+app.smarterbot.store/dashboard/automatizaciones
    ↓ UI Dashboard
 Usuario final
 ```
@@ -106,7 +106,7 @@ Ejecuta un workflow en N8N
 
 ## 🎨 Dashboard UI
 
-**URL**: `https://app.smarterbot.cl/dashboard/automatizaciones`
+**URL**: `https://app.smarterbot.store/dashboard/automatizaciones`
 
 ### Features Implementados:
 
@@ -226,7 +226,7 @@ curl https://api.smarterbot.cl/n8n/templates?category=odoo
 ```
 
 ### Test Dashboard
-1. Visitar `https://app.smarterbot.cl/dashboard/automatizaciones`
+1. Visitar `https://app.smarterbot.store/dashboard/automatizaciones`
 2. Verificar que se muestren 10 workflows
 3. Verificar paginación funcional
 4. Verificar categorías con colores
@@ -269,7 +269,7 @@ curl https://api.smarterbot.cl/n8n/templates?category=odoo
 - CORS configurado para dominios permitidos
 
 ### Dashboard Authentication
-- Requiere login en app.smarterbot.cl
+- Requiere login en app.smarterbot.store
 - Session protegida por middleware
 - Sin exposición de secrets al frontend
 
@@ -283,7 +283,7 @@ N8N_BASE_URL=https://n8n.smarterbot.cl
 N8N_API_KEY=<your-n8n-api-key>
 ```
 
-### Frontend (app.smarterbot.cl)
+### Frontend (app.smarterbot.store)
 ```bash
 # No se requieren env vars adicionales
 # Usa endpoints públicos de la API
@@ -295,7 +295,7 @@ N8N_API_KEY=<your-n8n-api-key>
 
 - [N8N API Documentation](https://docs.n8n.io/api/)
 - [n8n-workflows Repository](https://github.com/SmarterCL/n8n-workflows)
-- [Dashboard Repository](https://github.com/SmarterCL/app.smarterbot.cl)
+- [Dashboard Repository](https://github.com/SmarterCL/app.smarterbot.store)
 - [API Gateway Repository](https://github.com/SmarterCL/api.smarterbot.cl)
 
 ---

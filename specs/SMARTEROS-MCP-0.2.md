@@ -156,19 +156,19 @@ Navigate to `/dashboard/mcp` after authentication. Select a quick action or manu
 ### cURL (Production)
 \`\`\`bash
 # List tenants
-curl -X POST https://app.smarterbot.cl/api/mcp/tool \\
+curl -X POST https://app.smarterbot.store/api/mcp/tool \\
   -H 'Content-Type: application/json' \\
   -H 'Cookie: __session=CLERK_SESSION' \\
   -d '{"name":"tenants.list"}'
 
 # Create tenant
-curl -X POST https://app.smarterbot.cl/api/mcp/tool \\
+curl -X POST https://app.smarterbot.store/api/mcp/tool \\
   -H 'Content-Type: application/json' \\
   -H 'Cookie: __session=CLERK_SESSION' \\
   -d '{"name":"tenants.create","args":{"rut":"12.345.678-9","businessName":"Demo Corp"}}'
 
 # Call FastAPI health
-curl -X POST https://app.smarterbot.cl/api/mcp/tool \\
+curl -X POST https://app.smarterbot.store/api/mcp/tool \\
   -H 'Content-Type: application/json' \\
   -H 'Cookie: __session=CLERK_SESSION' \\
   -d '{"name":"fastapi.get","args":{"path":"/health"}}'
